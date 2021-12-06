@@ -1,0 +1,11 @@
+.quick-list-logo-container{
+    width: 100%;
+    background-color: antiquewhite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-list-logo-container .quick-list-logo{
+    font-size: 3rem;
+}
