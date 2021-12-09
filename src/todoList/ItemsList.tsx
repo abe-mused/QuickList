@@ -3,7 +3,8 @@ import Container from "react-bootstrap/Container";
 import Button from 'react-bootstrap/Button';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
-import InputGroup from 'react-bootstrap/InputGroup'
+import ListGroup from 'react-bootstrap/ListGroup'
+import Badge from 'react-bootstrap/ListGroup'
 import Form from 'react-bootstrap/Form'
 import './ItemsList.css';
 
@@ -16,8 +17,8 @@ import './ItemsList.css';
 
 type Props = {}
 type State = {
-  newItem: string,
-  list: TaskEntry[],
+  descInput: string,
+  taskList: TaskEntry[],
 }
 
 type TaskEntry = {
@@ -37,38 +38,38 @@ class ItemsList extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
-      newItem: "",
-      list: [],
+      descInput: "",
+      taskList: [],
     };
   }
 
   updateInput(event: React.ChangeEvent<HTMLInputElement>) {
-    this.setState({ newItem: event.target.value });
+    this.setState({ descInput: event.target.value });
   }
 
   addItem() {
 
-    const newItem: TaskEntry = {
+    const taskDescInput: TaskEntry = {
       id: 1 + Math.random(),
-      description: this.state.newItem.slice(),
+      description: this.state.descInput.slice(),
       date: " ",
       category: { name: " ", parentCategory: null },
       priority: 1,
       status: "active"
     };
 
-    const tempList: TaskEntry[] = [...this.state.list];
+    const tempList: TaskEntry[] = [...this.state.taskList];
 
-    tempList.push(newItem);
+    tempList.push(taskDescInput);
 
     this.setState({
-      newItem: "",
-      list: tempList
+      descInput: "",
+      taskList: tempList
     });
 
   }
   deleteItem(id: number) {
-    const list = [...this.state.list];
+    const list = [...this.state.taskList];
 
     const updatedList = list.filter(function (item) {
       if (item.id !== id) {
@@ -76,7 +77,7 @@ class ItemsList extends React.Component<Props, State> {
       }
     });
 
-    this.setState({ list: updatedList });
+    this.setState({ taskList: updatedList });
   }
 
   render() {
@@ -93,7 +94,7 @@ class ItemsList extends React.Component<Props, State> {
                   <Form.Label>Enter Task Description</Form.Label>
                   <Form.Control as="textarea" rows={3} type="text"
                     placeholder="type item here..."
-                    value={this.state.newItem}
+                    value={this.state.descInput}
                     onChange={(e: any) => this.updateInput(e)} />
                 </Form.Group>
                 <Form.Group className="mb-3">
@@ -121,7 +122,7 @@ class ItemsList extends React.Component<Props, State> {
                 </Row>
                 <Button
                   onClick={() => this.addItem()}
-                  disabled={!this.state.newItem.length}
+                  disabled={!this.state.descInput.length}
                   type="submit"
                   variant="primary"
                 >
@@ -132,12 +133,25 @@ class ItemsList extends React.Component<Props, State> {
               <h1>Current Task List</h1>
               <br />
               <ul>
-                {this.state.list.map((item) => {
+                {this.state.taskList.map((item) => {
                   return (
-                    <li key={item.id}>
-                      {item.description}
-                      <button onClick={() => this.deleteItem(item.id)}>X</button>
-                    </li>
+
+                    <div>
+                      <ListGroup as="ol" numbered>
+                        <ListGroup.Item
+                          as="li"
+                          className="d-flex justify-content-between align-items-start"
+                        >
+                          <div className="ms-2 me-auto">
+                            <div className="fw-bold">{item.description}</div>
+                            something here
+                          </div>
+                          <Badge>
+                            {/* {item.category} */}
+                          </Badge>
+                        </ListGroup.Item>
+                      </ListGroup>
+                    </div>
                   );
                 })}
               </ul>
