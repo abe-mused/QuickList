@@ -23,7 +23,7 @@ type TaskEntry = {
   date: string,
   category: CategoryType,
   priority?: number,
-  status: "active" | "complete"
+  status?: string
 }
 type CategoryType = {
   name: string,
@@ -75,6 +75,12 @@ class ItemsList extends React.Component<Props, State> {
     });
   }
 
+  updateStatus(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({
+      taskInput: { ...this.state.taskInput, status: event.target.value }
+    });
+  }
+
 
   addItem() {
 
@@ -84,7 +90,7 @@ class ItemsList extends React.Component<Props, State> {
       date: this.state.taskInput.date,
       category: { name: this.state.taskInput.category.name, parentCategory: null },
       priority: this.state.taskInput.priority,
-      status: "active"
+      status: this.state.taskInput.status
     };
 
     const tempList: TaskEntry[] = [...this.state.taskList];
@@ -168,6 +174,18 @@ class ItemsList extends React.Component<Props, State> {
                       </Form.Select>
                     </Form.Group>
                   </Col>
+                  <Col>
+                    <Form.Group className="mb-3" >
+                      <Form.Label>Status</Form.Label>
+                      <Form.Select
+                        value={this.state.taskInput.status}
+                        onChange={(e: any) => this.updateStatus(e)}>
+                        <option value="None">None</option>
+                        <option value="Active">Active</option>
+                        <option value="Completed">Completed</option>
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
                 </Row>
                 <Button
                   onClick={() => this.addItem()}
@@ -196,10 +214,12 @@ class ItemsList extends React.Component<Props, State> {
                           <Button variant="danger">delete</Button>
                           <div className="ms-2 me-auto">
                             <div className="fw-bold">{item.date}</div>
-                            {item.description.length}
+                            {item.description}
                           </div>
+
                           {(item.category.name.length > 1) ? <Badge bg="primary" pill> Category:{item.category.name} </Badge> : null}
                           {(item.priority == 0) ? null : <Badge bg="secondary" pill> Priority: {item.priority} </Badge>}
+                          {(item.status == "active") ? null : <Badge bg="secondary" pill> Status: {item.status} </Badge>}
                         </ListGroup.Item>
                       </ListGroup>
                     </div>
