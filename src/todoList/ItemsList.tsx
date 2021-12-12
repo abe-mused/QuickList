@@ -9,25 +9,15 @@ import Form from 'react-bootstrap/Form'
 import './ItemsList.css';
 
 
-//task description
-//due date
-//task category
-//proirity level
-//status ( active or completed)
-
-
-
 type TaskEntry = {
   id: number,
   description: string;
   date: string,
-  category: CategoryType,
   priority?: number,
-  status?: string
-}
-type CategoryType = {
-  name: string,
-  parentCategory?: CategoryType | null
+  status?: string,
+  category: string,
+  subCategories: string[]
+  subCatInput: string
 }
 
 type Props = {}
@@ -43,45 +33,22 @@ class ItemsList extends React.Component<Props, State> {
         id: 0,
         description: "",
         date: "",
-        category: {
-          name: " ",
-          parentCategory: null
-        },
         priority: 0,
-        status: "active"
+        subCategories: [],
+        subCatInput: ""
       },
       taskList: [],
     };
   }
 
-  //fetch data from server before component mounts
-  // componentDidMount() {
-  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', { mode: 'no-cors' })
-  //     .then(response => console.log(response))
-  //     .catch(err => {
-  //       console.log("GET Error");
-  //       console.log(err);
-  //     });
-  // }
-
-  // update server with current state Task List
-  updateServer() {
-    const postData = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(this.state.taskList)
-    };
-
-    fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
-      .then(response => response.json())
-      .then(data => {
-        console.log("POST Complete")
+  // fetch data from server before component mounts
+  componentDidMount() {
+    fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos')
+      .then((response) => {
+        return response.json();
+      }).then((data) => {
+        this.setState({ taskList: data })
         console.log(data);
-      }).catch(err => {
-        console.log("Error Making POST")
-        console.log(err);
       });
   }
 
@@ -92,7 +59,7 @@ class ItemsList extends React.Component<Props, State> {
   }
   updateCategoryInput(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({
-      taskInput: { ...this.state.taskInput, category: { name: event.target.value } }
+      taskInput: { ...this.state.taskInput, category: event.target.value }
     });
   }
   updateDate(event: React.ChangeEvent<HTMLInputElement>) {
@@ -111,37 +78,57 @@ class ItemsList extends React.Component<Props, State> {
       taskInput: { ...this.state.taskInput, status: event.target.value }
     });
   }
+  updateSubcategoryInput(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({
+      taskInput: { ...this.state.taskInput, subCatInput: event.target.value }
+    });
+  }
 
 
   addItem() {
+    let subCat = this.state.taskInput.subCatInput == "" ? [""] : this.state.taskInput.subCatInput.split(' ');
 
     const taskInput: TaskEntry = {
       id: 1 + Math.random(),
       description: this.state.taskInput.description.slice(),
       date: this.state.taskInput.date,
-      category: { name: this.state.taskInput.category.name, parentCategory: null },
+      category: this.state.taskInput.category,
+      subCategories: subCat,
       priority: this.state.taskInput.priority,
-      status: this.state.taskInput.status
+      status: this.state.taskInput.status,
+      subCatInput: this.state.taskInput.subCatInput
     };
 
     const tempList: TaskEntry[] = [...this.state.taskList];
     tempList.push(taskInput);
 
-    this.setState({
-      taskInput: {
-        id: 0,
-        description: "",
-        date: "",
-        category: {
-          name: " ",
-          parentCategory: null
-        },
-        priority: 0,
-        status: "active"
-      },
-      taskList: tempList
-    });
+    const postData = {
+      method: 'POST',
+      body: JSON.stringify(tempList)
+    };
 
+    fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
+      .then(response => response.json())
+      .then(data => {
+        this.setState({
+          taskInput: {
+            id: 0,
+            description: "",
+            date: "",
+            priority: 0,
+            status: "Active",
+            category: "",
+            subCategories: [],
+            subCatInput: ""
+          },
+          taskList: tempList
+        });
+        console.log("POST Complete")
+        console.log(data);
+      }).catch(err => {
+        console.log("Error Making POST")
+        console.log(err);
+      });
 
   }
   deleteItem(id: number) {
@@ -153,7 +140,22 @@ class ItemsList extends React.Component<Props, State> {
       }
     });
 
-    this.setState({ taskList: updatedList });
+    const postData = {
+      method: 'POST',
+      body: JSON.stringify(updatedList)
+    };
+
+    fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
+      .then(response => response.json())
+      .then(data => {
+        console.log("POST Complete")
+        console.log(data);
+        this.setState({ taskList: updatedList });
+      }).catch(err => {
+        console.log("Error Making POST")
+        console.log(err);
+      });
+
   }
 
   editItem(item: TaskEntry) {
@@ -182,8 +184,15 @@ class ItemsList extends React.Component<Props, State> {
                   <Form.Label>Task Category</Form.Label>
                   <Form.Control type="text"
                     placeholder="type category here..."
-                    value={this.state.taskInput.category?.name}
+                    value={this.state.taskInput.category}
                     onChange={(e: any) => this.updateCategoryInput(e)} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Task SubCategories</Form.Label>
+                  <Form.Control type="text"
+                    placeholder="type subcategories here separated by spaces..."
+                    value={this.state.taskInput.subCatInput}
+                    onChange={(e: any) => this.updateSubcategoryInput(e)} />
                 </Form.Group>
                 <Row>
                   <Col>
@@ -224,7 +233,9 @@ class ItemsList extends React.Component<Props, State> {
                   </Col>
                 </Row>
                 <Button
-                  onClick={() => this.addItem()}
+                  onClick={() => {
+                    this.addItem();
+                  }}
                   disabled={!this.state.taskInput.description.length || !this.state.taskInput.date.length}
                   variant="primary"
                 >
@@ -232,7 +243,7 @@ class ItemsList extends React.Component<Props, State> {
                 </Button>
               </Form>
               <br />
-              <h1>Current Task List</h1>
+              <h3>Current Task List <Badge bg="primary" pill>Category</Badge> <Badge bg="info" pill>Sub Categories</Badge></h3>
               <br />
 
               <ul>
@@ -245,18 +256,21 @@ class ItemsList extends React.Component<Props, State> {
 
                         <ListGroup.Item
                           as="li"
-                          className="d-flex justify-content-between align-items-start"
+                        // className="d-flex justify-content-between align-items-start"
                         >
-                          <Button variant="warning" size="sm" onClick={() => this.editItem(item)}>Edit</Button>
-                          <Button variant="danger" size="sm" onClick={() => this.deleteItem(item.id)}>Remove</Button>
+                          <Badge bg={item.status == "Completed" ? "success" : "warning"} pill> Status: {item.status} </Badge>
+                          {(item.priority == 0) ? null : <Badge bg="dark" pill> Priority: {item.priority} </Badge>}
+                          {(item.category.length > 1) ? <Badge bg="primary" pill>{item.category} </Badge> : null}
+                          {item.subCategories.map((item2) => {
+                            return (<Badge bg="info" pill>{item2} </Badge>)
+                          })}
                           <div className="ms-2 me-auto">
                             <div className="fw-bold">{item.date}</div>
                             {item.description}
                           </div>
-
-                          {(item.category.name.length > 1) ? <Badge bg="primary" pill> Category:{item.category.name} </Badge> : null}
-                          {(item.priority == 0) ? null : <Badge bg="info" pill> Priority: {item.priority} </Badge>}
-                          {(item.status == "active") ? null : <Badge bg={item.status == "Completed" ? "success" : "warning"} pill> Status: {item.status} </Badge>}
+                          <br></br>
+                          <Button variant="warning" size="sm" onClick={() => this.editItem(item)}>Edit</Button>
+                          <Button variant="danger" size="sm" onClick={() => this.deleteItem(item.id)}>Remove</Button>
                         </ListGroup.Item>
                       </ListGroup>
                     </div>
