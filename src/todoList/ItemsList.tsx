@@ -34,6 +34,8 @@ class ItemsList extends React.Component<Props, State> {
         description: "",
         date: "",
         priority: 0,
+        status: "Active",
+        category: "",
         subCategories: [],
         subCatInput: ""
       },
