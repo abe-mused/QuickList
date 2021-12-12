@@ -211,7 +211,7 @@ class ItemsList extends React.Component<Props, State> {
                           as="li"
                           className="d-flex justify-content-between align-items-start"
                         >
-                          <Button variant="danger">delete</Button>
+                          <Button variant="danger" onClick={() => this.deleteItem(item.id)}>Complete</Button>
                           <div className="ms-2 me-auto">
                             <div className="fw-bold">{item.date}</div>
                             {item.description}
