@@ -54,6 +54,41 @@ class ItemsList extends React.Component<Props, State> {
     };
   }
 
+  // componentDidMount() {
+  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos')
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       console.log(data);
+
+  //       //clean up data
+  //       //set taskList state to data
+  //     }).catch(err => {
+  //       console.log("GET Error");
+  //       console.log(err);
+  //     });
+  // }
+
+  //update server with current state Task List
+  // updateServer() {
+  //   const postData = {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     },
+  //     body: JSON.stringify(this.state.taskList)
+  //   };
+
+  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       console.log("POST Complete")
+  //       console.log(data);
+  //     }).catch(err => {
+  //       console.log("Error Making POST")
+  //       console.log(err);
+  //     });
+  // }
+
   updateDescInput(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({
       taskInput: { ...this.state.taskInput, description: event.target.value }
@@ -125,6 +160,11 @@ class ItemsList extends React.Component<Props, State> {
     this.setState({ taskList: updatedList });
   }
 
+  editItem(item: TaskEntry) {
+    this.setState({ taskInput: item });
+    this.deleteItem(item.id);
+  }
+
   render() {
     return (
       <div>
@@ -132,7 +172,7 @@ class ItemsList extends React.Component<Props, State> {
           <Row className="ItemsList">
             <Col xs={8}>
               <h1 className="header">
-                Enter Task
+                Enter/Edit Task
               </h1>
               <Form>
                 <Form.Group className="mb-3">
@@ -211,15 +251,16 @@ class ItemsList extends React.Component<Props, State> {
                           as="li"
                           className="d-flex justify-content-between align-items-start"
                         >
-                          <Button variant="danger" onClick={() => this.deleteItem(item.id)}>Complete</Button>
+                          <Button variant="warning" size="sm" onClick={() => this.editItem(item)}>Edit</Button>
+                          <Button variant="danger" size="sm" onClick={() => this.deleteItem(item.id)}>Remove</Button>
                           <div className="ms-2 me-auto">
                             <div className="fw-bold">{item.date}</div>
                             {item.description}
                           </div>
 
                           {(item.category.name.length > 1) ? <Badge bg="primary" pill> Category:{item.category.name} </Badge> : null}
-                          {(item.priority == 0) ? null : <Badge bg="secondary" pill> Priority: {item.priority} </Badge>}
-                          {(item.status == "active") ? null : <Badge bg="secondary" pill> Status: {item.status} </Badge>}
+                          {(item.priority == 0) ? null : <Badge bg="info" pill> Priority: {item.priority} </Badge>}
+                          {(item.status == "active") ? null : <Badge bg={item.status == "Completed" ? "success" : "warning"} pill> Status: {item.status} </Badge>}
                         </ListGroup.Item>
                       </ListGroup>
                     </div>
