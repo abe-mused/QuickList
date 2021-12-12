@@ -196,7 +196,7 @@ class ItemsList extends React.Component<Props, State> {
                           <Button variant="danger">delete</Button>
                           <div className="ms-2 me-auto">
                             <div className="fw-bold">{item.date}</div>
-                            {item.description.length}
+                            {item.description}
                           </div>
                           {(item.category.name.length > 1) ? <Badge bg="primary" pill> Category:{item.category.name} </Badge> : null}
                           {(item.priority == 0) ? null : <Badge bg="secondary" pill> Priority: {item.priority} </Badge>}
