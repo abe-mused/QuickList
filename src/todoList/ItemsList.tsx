@@ -54,40 +54,36 @@ class ItemsList extends React.Component<Props, State> {
     };
   }
 
+  //fetch data from server before component mounts
   // componentDidMount() {
-  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos')
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       console.log(data);
-
-  //       //clean up data
-  //       //set taskList state to data
-  //     }).catch(err => {
+  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', { mode: 'no-cors' })
+  //     .then(response => console.log(response))
+  //     .catch(err => {
   //       console.log("GET Error");
   //       console.log(err);
   //     });
   // }
 
-  //update server with current state Task List
-  // updateServer() {
-  //   const postData = {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     },
-  //     body: JSON.stringify(this.state.taskList)
-  //   };
+  // update server with current state Task List
+  updateServer() {
+    const postData = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(this.state.taskList)
+    };
 
-  //   fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       console.log("POST Complete")
-  //       console.log(data);
-  //     }).catch(err => {
-  //       console.log("Error Making POST")
-  //       console.log(err);
-  //     });
-  // }
+    fetch('https://ssxekmcnt8.execute-api.us-east-1.amazonaws.com/Prod/api/todos', postData)
+      .then(response => response.json())
+      .then(data => {
+        console.log("POST Complete")
+        console.log(data);
+      }).catch(err => {
+        console.log("Error Making POST")
+        console.log(err);
+      });
+  }
 
   updateDescInput(event: React.ChangeEvent<HTMLInputElement>) {
     this.setState({
