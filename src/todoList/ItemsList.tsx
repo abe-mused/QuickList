@@ -1,31 +1,49 @@
 import React, { Component } from "react";
 import Container from "react-bootstrap/Container";
 import Button from 'react-bootstrap/Button';
+import Table from 'react-bootstrap/Table';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import ListGroup from 'react-bootstrap/ListGroup'
 import Badge from 'react-bootstrap/Badge'
 import Form from 'react-bootstrap/Form'
 import './ItemsList.css';
+import { Console } from "console";
 
 
-type TaskEntry = {
+export type TaskEntry = {
   id: number,
   description: string;
   date: string,
-  priority?: number,
+  priority: number,
   status?: string,
   category: string,
   subCategories: string[]
   subCatInput: string
 }
+export type weeklyReportEntry = {
+  date:string;
+  numOfTasks: any;
+}
+
+export enum DisplayMode {
+  DEFAULT, // requirement #1
+  DAY_REPORT, // requirement #2
+  WEEK_REPORT, // requirement #3
+  ALL, //diplays all tasks
+}
 
 type Props = {}
 type State = {
   taskInput: TaskEntry,
-  taskList: TaskEntry[],
+  allTasksList: TaskEntry[],
+  displayMode: DisplayMode,
+  activeTasksList: TaskEntry[], 
+  dayReportSelection: string,
+  weekReportSelection: string,
+  weekReportData: weeklyReportEntry[],
 }
-class ItemsList extends React.Component<Props, State> {
+class ItemsList extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -39,7 +57,12 @@ class ItemsList extends React.Component<Props, State> {
         subCategories: [],
         subCatInput: ""
       },
-      taskList: [],
+      allTasksList: [],
+      displayMode: DisplayMode.DEFAULT,
+      activeTasksList: [],
+      dayReportSelection: "",
+      weekReportSelection: "",
+      weekReportData: []
     };
   }
 
@@ -49,8 +72,8 @@ class ItemsList extends React.Component<Props, State> {
       .then((response) => {
         return response.json();
       }).then((data) => {
-        this.setState({ taskList: data })
-        console.log(data);
+        this.setState({ allTasksList: data, activeTasksList: [] })
+        this.setModeToDefault();
       });
   }
 
@@ -88,7 +111,7 @@ class ItemsList extends React.Component<Props, State> {
 
 
   addItem() {
-    let subCat = this.state.taskInput.subCatInput == "" ? [""] : this.state.taskInput.subCatInput.split(' ');
+    let subCat = this.state.taskInput.subCatInput === "" ? [] : this.state.taskInput.subCatInput.split(',');
 
     const taskInput: TaskEntry = {
       id: 1 + Math.random(),
@@ -96,12 +119,12 @@ class ItemsList extends React.Component<Props, State> {
       date: this.state.taskInput.date,
       category: this.state.taskInput.category,
       subCategories: subCat,
-      priority: this.state.taskInput.priority,
+      priority: this.state.taskInput.priority | 0,
       status: this.state.taskInput.status,
       subCatInput: this.state.taskInput.subCatInput
     };
 
-    const tempList: TaskEntry[] = [...this.state.taskList];
+    const tempList: TaskEntry[] = [...this.state.allTasksList];
     tempList.push(taskInput);
 
     const postData = {
@@ -123,7 +146,7 @@ class ItemsList extends React.Component<Props, State> {
             subCategories: [],
             subCatInput: ""
           },
-          taskList: tempList
+          allTasksList: tempList
         });
         console.log("POST Complete")
         console.log(data);
@@ -134,13 +157,9 @@ class ItemsList extends React.Component<Props, State> {
 
   }
   deleteItem(id: number) {
-    const list = [...this.state.taskList];
+    const list = [...this.state.allTasksList];
 
-    const updatedList = list.filter(function (item) {
-      if (item.id !== id) {
-        return item;
-      }
-    });
+    const updatedList = list.filter( item=> item.id !== id);
 
     const postData = {
       method: 'POST',
@@ -152,7 +171,7 @@ class ItemsList extends React.Component<Props, State> {
       .then(data => {
         console.log("POST Complete")
         console.log(data);
-        this.setState({ taskList: updatedList });
+        this.setState({ allTasksList: updatedList });
       }).catch(err => {
         console.log("Error Making POST")
         console.log(err);
@@ -163,6 +182,122 @@ class ItemsList extends React.Component<Props, State> {
   editItem(item: TaskEntry) {
     this.setState({ taskInput: item });
     this.deleteItem(item.id);
+  }
+
+  setModeToAll() {
+    
+    this.setState(
+      {
+        activeTasksList:this.state.allTasksList,
+        displayMode: DisplayMode.ALL,
+        weekReportSelection: "",
+        dayReportSelection: ""
+      }
+    );
+  }
+
+  setModeToDefault() {
+    const tempActiveTaskList: TaskEntry[] = [];
+    
+    const isDueTodayOrOverdue = (date: string): boolean =>{
+      let inputDate = new Date(date);
+      const offset = inputDate.getTimezoneOffset()
+      inputDate = new Date(inputDate.getTime() + (offset*60*1000));
+      
+      let todaysDate = new Date();
+      
+      return todaysDate >= inputDate;
+    }
+    
+    this.state.allTasksList.forEach(task=>{
+      if(isDueTodayOrOverdue(task.date)){
+        tempActiveTaskList.push(task);
+      }
+    })
+    
+    const sortedActiveTaskList: TaskEntry[] = tempActiveTaskList.sort((a,b) => {
+      if(a.priority === 0){
+        return 1;
+      }
+      if(b.priority === 0){
+        return -1;
+      }
+      return (a.priority > b.priority) ? 1 : ((b.priority > a.priority) ? -1 : 0)
+    });
+    this.setState(
+      {
+        activeTasksList: sortedActiveTaskList,
+        displayMode: DisplayMode.DEFAULT,
+        weekReportSelection: "",
+        dayReportSelection: ""
+      }
+    );
+  }
+
+  setModeToDayReport(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({
+      ...this.state,
+      dayReportSelection: event.target.value 
+    });
+    const tempActiveTaskList: TaskEntry[] = [];
+
+    this.state.allTasksList.forEach(task=>{
+      if(event.target.value === task.date){
+          tempActiveTaskList.push(task);
+      }
+    })
+    this.setState(
+      {
+        activeTasksList:tempActiveTaskList.filter(task =>(task.status == "Completed")),
+        displayMode: DisplayMode.DAY_REPORT
+      }
+    );
+  }
+
+  setModeToWeekReport(event: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({
+      ...this.state,
+      weekReportSelection: event.target.value 
+    });
+    const isWithinWeek = (dateString:string, anotherDateString: string)=>{
+      const startOfWeek = new Date(dateString);
+      const endOfWeek = new Date(startOfWeek.getTime()+ 604800000); //tere are 604,800,000 milliseconds in a week
+      const anotherDate = new Date(anotherDateString);
+      
+      return ( (startOfWeek.getTime()/86400000) <= anotherDate.getTime()/86400000 ) && ( (endOfWeek.getTime()/86400000) > anotherDate.getTime()/86400000 );
+    }
+    let tempActiveTaskList: TaskEntry[] = [];
+
+    this.state.allTasksList.forEach(task=>{
+      if(isWithinWeek(event.target.value, task.date)){
+          tempActiveTaskList.push(task);
+      }
+    })
+    tempActiveTaskList = tempActiveTaskList.filter(task =>(task.status == "Completed"));
+    const tempWeekReportData: any = {};
+    tempActiveTaskList.forEach(task =>{
+      if(tempWeekReportData[task.date]){
+        tempWeekReportData[task.date] += 1;
+      }else{
+        tempWeekReportData[task.date] = 1;
+      }
+    })
+    const tempWeekReportDataarray: weeklyReportEntry[] = [];
+    for (const [key, value] of Object.entries(tempWeekReportData)) {
+      tempWeekReportDataarray.push({
+          date: key,
+          numOfTasks:value
+        }
+      )
+    }
+
+    this.setState(
+      {
+        activeTasksList:tempActiveTaskList,
+        displayMode: DisplayMode.WEEK_REPORT,
+        weekReportData: tempWeekReportDataarray
+      }
+    );
   }
 
   render() {
@@ -176,7 +311,7 @@ class ItemsList extends React.Component<Props, State> {
               </h1>
               <Form>
                 <Form.Group className="mb-3">
-                  <Form.Label>Enter Task Description</Form.Label>
+                  <Form.Label>Enter Task Description (required)</Form.Label>
                   <Form.Control as="textarea" rows={3} type="text"
                     placeholder="type item here..."
                     value={this.state.taskInput.description}
@@ -192,14 +327,14 @@ class ItemsList extends React.Component<Props, State> {
                 <Form.Group className="mb-3">
                   <Form.Label>Task SubCategories</Form.Label>
                   <Form.Control type="text"
-                    placeholder="type subcategories here separated by spaces..."
+                    placeholder="type subcategories here separated by commas..."
                     value={this.state.taskInput.subCatInput}
                     onChange={(e: any) => this.updateSubcategoryInput(e)} />
                 </Form.Group>
                 <Row>
                   <Col>
                     <Form.Group className="mb-3">
-                      <Form.Label>Select due date</Form.Label>
+                      <Form.Label>Select due date (required)</Form.Label>
                       <Form.Control
                         type="date"
                         name='due_date'
@@ -227,7 +362,6 @@ class ItemsList extends React.Component<Props, State> {
                       <Form.Select
                         value={this.state.taskInput.status}
                         onChange={(e: any) => this.updateStatus(e)}>
-                        <option value="None">None</option>
                         <option value="Active">Active</option>
                         <option value="Completed">Completed</option>
                       </Form.Select>
@@ -246,10 +380,106 @@ class ItemsList extends React.Component<Props, State> {
               </Form>
               <br />
               <h3>Current Task List <Badge bg="primary" pill>Category</Badge> <Badge bg="info" pill>Sub Categories</Badge></h3>
+              <h6>mode: 
+                <Button
+                    onClick={() => {
+                      this.setModeToAll();
+                    }}
+                    variant={this.state.displayMode == DisplayMode.ALL? "primary": "secondary"}
+                  >
+                    All
+                </Button>
+                <Button
+                    onClick={() => {
+                      this.setModeToDefault();
+                    }}
+                    variant={this.state.displayMode == DisplayMode.DEFAULT? "primary": "secondary"}
+                  >
+                    Default
+                </Button>
+                <Button
+                  onClick={() => {
+                    this.setState({
+                      displayMode: DisplayMode.DAY_REPORT,
+                      activeTasksList: [],
+                      weekReportSelection: "",
+                      dayReportSelection: ""
+                    });
+                  }}
+                  variant={this.state.displayMode == DisplayMode.DAY_REPORT? "primary": "secondary"}
+                >
+                  Day Report
+                </Button>
+                <Button
+                  onClick={() => {
+                    this.setState({
+                      displayMode: DisplayMode.WEEK_REPORT,
+                      activeTasksList: [],
+                      dayReportSelection: "",
+                      weekReportSelection: ""
+
+                    });                  
+                  }}
+                  variant={this.state.displayMode == DisplayMode.WEEK_REPORT? "primary": "secondary"}
+                >
+                  Week Report
+                </Button>
+              </h6>
+              {
+                this.state.displayMode === DisplayMode.DAY_REPORT?
+              <Form.Group className="mb-3">
+                <Form.Label>Select day of report</Form.Label>
+                <Form.Control
+                  type="date"
+                  name='due_date'
+                  value={this.state.dayReportSelection}
+                  onChange={(e: any) => this.setModeToDayReport(e)} />
+              </Form.Group> : ""
+              }
+              {
+                this.state.displayMode === DisplayMode.WEEK_REPORT?
+              <Form.Group className="mb-3">
+                <Form.Label>Select the start day of weekly report</Form.Label>
+                <Form.Control
+                  type="date"
+                  name='due_date'
+                  value={this.state.weekReportSelection}
+                  onChange={(e: any) => this.setModeToWeekReport(e)} />
+              </Form.Group> : ""
+              }
               <br />
+              {
+                console.log(this.state.weekReportData)
+              }
+              {
+
+                this.state.displayMode === DisplayMode.WEEK_REPORT && this.state.activeTasksList.length > 0?
+                <div>
+                  <Table striped bordered hover size="sm">
+                    <thead>
+                      <tr>
+                        <th>Day</th>
+                        <th>Number Of Complete Tasks Due</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {
+                        this.state.weekReportData.map(item =>{
+                          return (
+                            <tr>
+                              <td>{item.date}</td>
+                              <td>{item.numOfTasks}</td>
+                            </tr>
+                          );
+                        })
+                      }
+                    </tbody>
+                  </Table>
+                </div>:""
+              }
 
               <ul>
-                {this.state.taskList.map((item: TaskEntry) => {
+                {this.state.activeTasksList.map((item: TaskEntry) => {
                   return (
 
                     <div>
@@ -260,14 +490,14 @@ class ItemsList extends React.Component<Props, State> {
                           as="li"
                         // className="d-flex justify-content-between align-items-start"
                         >
-                          <Badge bg={item.status == "Completed" ? "success" : "warning"} pill> Status: {item.status} </Badge>
-                          {(item.priority == 0) ? null : <Badge bg="dark" pill> Priority: {item.priority} </Badge>}
+                          <Badge bg={item.status === "Completed" ? "success" : "warning"} pill> Status: {item.status} </Badge>
+                          {(item.priority === 0) ? null : <Badge bg="dark" pill> Priority: {item.priority} </Badge>}
                           {(item.category.length > 1) ? <Badge bg="primary" pill>{item.category} </Badge> : null}
                           {item.subCategories.map((item2) => {
                             return (<Badge bg="info" pill>{item2} </Badge>)
                           })}
                           <div className="ms-2 me-auto">
-                            <div className="fw-bold">{item.date}</div>
+                            <div className="fw-bold">Due Date: {item.date}</div>
                             {item.description}
                           </div>
                           <br></br>
