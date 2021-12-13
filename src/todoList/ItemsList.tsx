@@ -146,8 +146,7 @@ class ItemsList extends Component<Props, State> {
           },
           allTasksList: tempList
         });
-        console.log("POST Complete")
-        console.log(data);
+        this.updateActiveTasksList();
       }).catch(err => {
         console.log("Error Making POST")
         console.log(err);
@@ -170,6 +169,7 @@ class ItemsList extends Component<Props, State> {
         console.log("POST Complete")
         console.log(data);
         this.setState({ allTasksList: updatedList });
+        this.updateActiveTasksList();
       }).catch(err => {
         console.log("Error Making POST")
         console.log(err);
@@ -232,7 +232,7 @@ class ItemsList extends Component<Props, State> {
     );
   }
 
-  setModeToDayReport(event: React.ChangeEvent<HTMLInputElement>) {
+  setModeToDayReport(event: any) {
     this.setState({
       ...this.state,
       dayReportSelection: event.target.value 
@@ -252,7 +252,7 @@ class ItemsList extends Component<Props, State> {
     );
   }
 
-  setModeToWeekReport(event: React.ChangeEvent<HTMLInputElement>) {
+  setModeToWeekReport(event: any) {
     this.setState({
       ...this.state,
       weekReportSelection: event.target.value 
@@ -298,6 +298,25 @@ class ItemsList extends Component<Props, State> {
     );
   }
 
+  updateActiveTasksList(){
+    if(this.state.displayMode === DisplayMode.ALL){
+      this.setModeToAll()
+    } else if(this.state.displayMode === DisplayMode.DEFAULT){
+      this.setModeToDefault()
+    } else if(this.state.displayMode === DisplayMode.DAY_REPORT){
+      this.setModeToDayReport({
+        target : {
+          value: this.state.dayReportSelection
+        }
+      })
+    } else {
+      this.setModeToWeekReport({
+        target : {
+          value: this.state.weekReportSelection
+        }
+      })
+    }
+  }
   render() {
     return (
       <div>
