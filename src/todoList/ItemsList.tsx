@@ -8,8 +8,6 @@ import ListGroup from 'react-bootstrap/ListGroup'
 import Badge from 'react-bootstrap/Badge'
 import Form from 'react-bootstrap/Form'
 import './ItemsList.css';
-import { Console } from "console";
-
 
 export type TaskEntry = {
   id: number,
@@ -248,7 +246,7 @@ class ItemsList extends Component<Props, State> {
     })
     this.setState(
       {
-        activeTasksList:tempActiveTaskList.filter(task =>(task.status == "Completed")),
+        activeTasksList:tempActiveTaskList.filter(task =>(task.status === "Completed")),
         displayMode: DisplayMode.DAY_REPORT
       }
     );
@@ -273,7 +271,7 @@ class ItemsList extends Component<Props, State> {
           tempActiveTaskList.push(task);
       }
     })
-    tempActiveTaskList = tempActiveTaskList.filter(task =>(task.status == "Completed"));
+    tempActiveTaskList = tempActiveTaskList.filter(task =>(task.status === "Completed"));
     const tempWeekReportData: any = {};
     tempActiveTaskList.forEach(task =>{
       if(tempWeekReportData[task.date]){
@@ -385,7 +383,7 @@ class ItemsList extends Component<Props, State> {
                     onClick={() => {
                       this.setModeToAll();
                     }}
-                    variant={this.state.displayMode == DisplayMode.ALL? "primary": "secondary"}
+                    variant={this.state.displayMode === DisplayMode.ALL? "primary": "secondary"}
                   >
                     All
                 </Button>
@@ -393,7 +391,7 @@ class ItemsList extends Component<Props, State> {
                     onClick={() => {
                       this.setModeToDefault();
                     }}
-                    variant={this.state.displayMode == DisplayMode.DEFAULT? "primary": "secondary"}
+                    variant={this.state.displayMode === DisplayMode.DEFAULT? "primary": "secondary"}
                   >
                     Default
                 </Button>
@@ -406,7 +404,7 @@ class ItemsList extends Component<Props, State> {
                       dayReportSelection: ""
                     });
                   }}
-                  variant={this.state.displayMode == DisplayMode.DAY_REPORT? "primary": "secondary"}
+                  variant={this.state.displayMode === DisplayMode.DAY_REPORT? "primary": "secondary"}
                 >
                   Day Report
                 </Button>
@@ -420,7 +418,7 @@ class ItemsList extends Component<Props, State> {
 
                     });                  
                   }}
-                  variant={this.state.displayMode == DisplayMode.WEEK_REPORT? "primary": "secondary"}
+                  variant={this.state.displayMode=== DisplayMode.WEEK_REPORT? "primary": "secondary"}
                 >
                   Week Report
                 </Button>
