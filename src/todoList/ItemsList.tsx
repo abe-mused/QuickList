@@ -40,6 +40,8 @@ type State = {
   dayReportSelection: string,
   weekReportSelection: string,
   weekReportData: weeklyReportEntry[],
+  isEditing: boolean,
+  oldCategoryName: string,
 }
 class ItemsList extends Component<Props, State> {
   constructor(props: Props) {
@@ -60,7 +62,9 @@ class ItemsList extends Component<Props, State> {
       activeTasksList: [],
       dayReportSelection: "",
       weekReportSelection: "",
-      weekReportData: []
+      weekReportData: [],
+      isEditing: false,
+      oldCategoryName: ""
     };
   }
 
@@ -121,8 +125,17 @@ class ItemsList extends Component<Props, State> {
       status: this.state.taskInput.status,
       subCatInput: this.state.taskInput.subCatInput
     };
-
-    const tempList: TaskEntry[] = [...this.state.allTasksList];
+    let tempList: TaskEntry[] = [];
+    if(this.state.isEditing){
+      tempList = this.state.allTasksList.map(item =>{
+        if(item.category === this.state.oldCategoryName){
+          item.category = taskInput.category;
+        }
+        return item;
+      })
+    }else{
+      tempList = [...this.state.allTasksList];
+    }
     tempList.push(taskInput);
 
     const postData = {
@@ -144,10 +157,13 @@ class ItemsList extends Component<Props, State> {
             subCategories: [],
             subCatInput: ""
           },
-          allTasksList: tempList
+          allTasksList: tempList,
+          isEditing: false,
+          oldCategoryName: ""
         });
         this.updateActiveTasksList();
       }).catch(err => {
+        this.setState({ isEditing: false, oldCategoryName: "" });
         console.log("Error Making POST")
         console.log(err);
       });
@@ -178,7 +194,7 @@ class ItemsList extends Component<Props, State> {
   }
 
   editItem(item: TaskEntry) {
-    this.setState({ taskInput: item });
+    this.setState({ taskInput: item, isEditing: true, oldCategoryName: item.category });
     this.deleteItem(item.id);
   }
 
@@ -324,8 +340,11 @@ class ItemsList extends Component<Props, State> {
           <Row className="ItemsList">
             <Col xs={8}>
               <h1 className="header">
-                Enter/Edit Task
+                {this.state.isEditing? "Edit":"Enter a "} Task
               </h1>
+              <h5>
+              {this.state.isEditing? "If you change the name of the category, it'll change for all the tasks in that category":""}
+              </h5>
               <Form>
                 <Form.Group className="mb-3">
                   <Form.Label>Enter Task Description (required)</Form.Label>
@@ -471,9 +490,6 @@ class ItemsList extends Component<Props, State> {
               </Form.Group> : ""
               }
               <br />
-              {
-                console.log(this.state.weekReportData)
-              }
               {
 
                 this.state.displayMode === DisplayMode.WEEK_REPORT && this.state.activeTasksList.length > 0?
