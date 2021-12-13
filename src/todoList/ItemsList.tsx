@@ -442,6 +442,12 @@ class ItemsList extends Component<Props, State> {
                   Week Report
                 </Button>
               </h6>
+              <div>
+                {this.state.displayMode === DisplayMode.ALL?
+                "This display mode shows you all the tasks, in no particulat order.": this.state.displayMode === DisplayMode.DEFAULT?
+                "This is the default display mode. It shows you tasks that are due today or overdue, sorted by priority.": this.state.displayMode === DisplayMode.DAY_REPORT?
+                "This display mode shows you the completed tasks due the selected day": "this mode shows you the stats of completed tasks for each day in the week that starts with the selected day. It also lists those tasks"}
+              </div>
               {
                 this.state.displayMode === DisplayMode.DAY_REPORT?
               <Form.Group className="mb-3">
